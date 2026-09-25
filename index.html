@@ -384,7 +384,9 @@
   .pricing-tier{
     background:var(--bg-raised); border:2px solid var(--line); padding:40px 32px; position:relative;
     transition:all .4s ease;
+    display:flex; flex-direction:column;
   }
+  .pricing-note{margin-top:auto;}
   .pricing-tier.featured{border-color:var(--yellow); background:linear-gradient(135deg, rgba(246,197,0,.08), rgba(246,197,0,.02));}
   .pricing-tier.featured::before{
     content:'BEST VALUE'; position:absolute; top:-12px; left:20px;
@@ -477,11 +479,12 @@
   .rev-card{
     background:var(--bg-raised); border:1px solid var(--line); padding:30px; border-radius:2px;
     transition:transform .35s ease, box-shadow .35s ease, border-color .35s ease;
+    display:flex; flex-direction:column;
   }
   .rev-card:hover{transform:translateY(-4px); box-shadow:0 14px 26px rgba(0,0,0,.32); border-color:rgba(246,197,0,.35);}
   .rev-card .stars{display:block; margin-bottom:16px;}
   .rev-card p{color:var(--ink); font-size:15px; margin-bottom:22px;}
-  .rev-card .who{display:flex; align-items:center; gap:12px;}
+  .rev-card .who{display:flex; align-items:center; gap:12px; margin-top:auto;}
   .avatar{
     width:36px; height:36px; border-radius:50%; background:var(--blue-dim);
     display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--ink);
@@ -1160,7 +1163,7 @@
           <span class="label" data-i18n="pricingThreeMonths">3 Months</span>
           <span class="amount">25 <span style="font-size:14px;">OMR</span></span>
         </div>
-        <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--line);">
+        <div class="pricing-note" style="padding-top:20px; border-top:1px solid var(--line);">
           <p style="font-size:13px; color:var(--ink-dim);" data-i18n="pricingSavings">Save up to 20% vs regular price</p>
         </div>
       </div>
