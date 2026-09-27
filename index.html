@@ -40,17 +40,8 @@
   @keyframes marquee{from{transform:translateX(0);} to{transform:translateX(-50%);}}
   @keyframes shimmer{from{background-position:-200% 0;} to{background-position:200% 0;}}
 
-  /* SCROLL REVEAL */
-  .reveal{opacity:0; transform:translateY(28px) scale(.97); filter:blur(6px); transition:opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1), filter .8s ease;}
-  .reveal.in{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
-  .reveal-stagger > *{opacity:0; transform:translateY(28px) scale(.97); filter:blur(6px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1), filter .7s ease;}
-  .reveal-stagger.in > *{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
-  .reveal-stagger.in > *:nth-child(1){transition-delay:.05s;}
-  .reveal-stagger.in > *:nth-child(2){transition-delay:.14s;}
-  .reveal-stagger.in > *:nth-child(3){transition-delay:.23s;}
-  .reveal-stagger.in > *:nth-child(4){transition-delay:.32s;}
-  .reveal-stagger.in > *:nth-child(5){transition-delay:.41s;}
-  .reveal-stagger.in > *:nth-child(6){transition-delay:.5s;}
+  /* SCROLL REVEAL — disabled, content is fully visible on load */
+  .reveal, .reveal-stagger > *{opacity:1; transform:none; filter:none;}
 
   /* PREMIUM CURSOR SPOTLIGHT (cards) */
   .fac-card, .class-card, .pricing-tier, .rev-card, .trans-card, .split-card{position:relative;}
@@ -1574,20 +1565,8 @@
     card.style.setProperty('--my', (e.clientY - r.top) + 'px');
   });
 
-  // Scroll reveal
+  // Stat count-up
   if('IntersectionObserver' in window){
-    var revealEls = document.querySelectorAll('.reveal, .reveal-stagger');
-    var io = new IntersectionObserver(function(entries){
-      entries.forEach(function(entry){
-        if(entry.isIntersecting){
-          entry.target.classList.add('in');
-          io.unobserve(entry.target);
-        }
-      });
-    }, {threshold:0.15, rootMargin:'0px 0px -60px 0px'});
-    revealEls.forEach(function(el){ io.observe(el); });
-
-    // Stat count-up
     var statNums = document.querySelectorAll('.stat .num[data-count]');
     function animateCount(el){
       var target = parseFloat(el.getAttribute('data-count'));
