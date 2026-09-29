@@ -43,6 +43,14 @@
   /* SCROLL REVEAL — disabled, content is fully visible on load */
   .reveal, .reveal-stagger > *{opacity:1; transform:none; filter:none;}
 
+  /* PREMIUM CURSOR SPOTLIGHT (cards) */
+  .fac-card, .class-card, .pricing-tier, .rev-card, .trans-card, .split-card{position:relative;}
+  .fac-card::after, .class-card::after, .pricing-tier::after, .rev-card::after, .trans-card::after, .split-card::after{
+    content:''; position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity .3s ease;
+    background:radial-gradient(240px circle at var(--mx,50%) var(--my,50%), rgba(246,197,0,.14), transparent 70%);
+  }
+  .fac-card:hover::after, .class-card:hover::after, .pricing-tier:hover::after, .rev-card:hover::after, .trans-card:hover::after, .split-card:hover::after{opacity:1;}
+
   /* SCROLL PROGRESS */
   .scroll-progress{position:fixed; top:0; left:0; height:3px; width:0%; background:var(--yellow); z-index:60;}
 
@@ -209,6 +217,13 @@
     display:flex; gap:14px; margin-top:34px; flex-wrap:wrap; align-items:center;
     animation:heroIn .8s ease both .5s;
   }
+  .btn-primary, .navcall{position:relative; overflow:hidden;}
+  .btn-primary::after, .navcall::after{
+    content:''; position:absolute; top:0; left:-60%; width:40%; height:100%;
+    background:linear-gradient(115deg, transparent, rgba(255,255,255,.55), transparent);
+    transform:skewX(-20deg); transition:left .55s ease;
+  }
+  .btn-primary:hover::after, .navcall:hover::after{left:130%;}
   .btn-primary{
     background:var(--yellow); color:#141210; padding:15px 28px 15px 22px; font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:0.04em;
     clip-path:polygon(0 0, 100% 0, 100% 100%, 14px 100%);
@@ -1540,6 +1555,15 @@
     }
   });
   onScroll();
+
+  // Cursor spotlight on cards
+  document.addEventListener('pointermove', function(e){
+    var card = e.target.closest && e.target.closest('.fac-card, .class-card, .pricing-tier, .rev-card, .trans-card, .split-card');
+    if(!card) return;
+    var r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  });
 
   // Stat count-up
   if('IntersectionObserver' in window){
