@@ -168,12 +168,12 @@
   .navlinks a:hover{color:var(--ink);}
   .navlinks a:hover::after{width:100%;}
   .navcall{
-    background:var(--yellow); color:#141210; padding:10px 20px 10px 14px;
+    background:var(--yellow); color:#141210; padding:10px 20px;
     font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em;
-    clip-path:polygon(0 0, 100% 0, 100% 100%, 10px 100%);
-    transition:background-color .2s ease, transform .2s ease;
+    border-radius:8px;
+    transition:transform .2s ease;
   }
-  .navcall:hover{background:#ffd633; transform:translateY(-2px);}
+  .navcall:hover{transform:translateY(-2px);}
   .navmob{display:none;}
 
   /* HERO */
@@ -230,15 +230,15 @@
   }
   .btn-primary:hover::after, .navcall:hover::after{left:130%;}
   .btn-primary{
-    background:var(--yellow); color:#141210; padding:15px 28px 15px 22px; font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:0.04em;
-    clip-path:polygon(0 0, 100% 0, 100% 100%, 14px 100%);
-    transition:background-color .2s ease, transform .2s ease, box-shadow .2s ease;
+    background:var(--yellow); color:#141210; padding:15px 28px; font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:0.04em;
+    border-radius:8px;
+    transition:transform .2s ease;
   }
-  .btn-primary:hover{background:#ffd633; transform:translateY(-3px); box-shadow:0 12px 26px rgba(246,197,0,.28);}
+  .btn-primary:hover{transform:translateY(-3px);}
   .btn-primary:active{transform:translateY(-1px);}
   .btn-ghost{
-    border:1px solid var(--line); padding:15px 28px 15px 22px; font-weight:700; font-size:14px; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em;
-    clip-path:polygon(0 0, 100% 0, 100% 100%, 14px 100%);
+    border:1px solid var(--line); padding:15px 28px; font-weight:700; font-size:14px; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em;
+    border-radius:8px;
     transition:border-color .2s ease, transform .2s ease, background-color .2s ease;
   }
   .btn-ghost:hover{border-color:var(--ink-dim); transform:translateY(-3px); background:rgba(255,255,255,.04);}
