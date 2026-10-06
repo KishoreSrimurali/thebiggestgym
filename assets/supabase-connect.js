@@ -1,27 +1,33 @@
-// Shared one-time "connect your Supabase project" flow for the staff and
-// member portals. Nothing here is hardcoded: until the gym owner pastes in
-// their own project's URL and anon key (through the UI this renders), the
-// portals show this screen instead of any demo content.
-//
-// Storage: localStorage, key "bg_supabase_config" -> {"url": "...", "key": "..."}
-// This never touches the service_role key — only the public anon key, which
-// is safe to ship in client-side code and is the one Supabase RLS policies
-// are designed to be used with.
+// Shared "connect your Supabase project" flow for the staff and member
+// portals. The real connection lives in assets/supabase-config.js — once
+// the gym's URL/key are filled in there, EVERY visitor (members on their
+// own phones, staff on theirs) connects automatically with no setup of
+// their own. localStorage is only a personal override for previewing a
+// different project on one device without editing that file; it is never
+// required for a real visitor and never touches the service_role key.
 (function (global) {
   const STORAGE_KEY = "bg_supabase_config";
+
+  function siteConfig() {
+    const url = global.BG_SUPABASE_URL;
+    const key = global.BG_SUPABASE_ANON_KEY;
+    if (typeof url === "string" && typeof key === "string" && url && key) {
+      return { url, key };
+    }
+    return null;
+  }
 
   function readConfig() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed.url === "string" && typeof parsed.key === "string" && parsed.url && parsed.key) {
-        return parsed;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.url === "string" && typeof parsed.key === "string" && parsed.url && parsed.key) {
+          return parsed;
+        }
       }
-      return null;
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { /* ignore and fall through to the site-wide config */ }
+    return siteConfig();
   }
 
   function writeConfig(url, key) {
@@ -79,19 +85,19 @@
       h("div", { class: "setup-screen" },
         h("div", { class: "box card" },
           h("div", { class: "brand" }, "THE BIGGEST ", h("span", {}, "GYM")),
-          h("h2", { style: "margin-top:4px" }, "Connect your Supabase project"),
+          h("h2", { style: "margin-top:4px" }, "This site isn't connected yet"),
           h("p", { class: "muted small", style: "margin-top:12px" },
-            `This is ${appName}. It only shows real, live information — so before it can show anything, it needs to know which Supabase project holds the gym's data.`),
+            `This is ${appName}. If you're a member or trainer, there's nothing to do here — please contact the gym and check back later. If you're setting this site up for the gym, this needs to be connected once in assets/supabase-config.js so every visitor works automatically; the fields below are a local preview only (saved to this browser alone) and are not how the real site gets wired up.`),
           h("p", { class: "muted small" },
-            "If you haven't made one yet: go to ", h("a", { href: "https://supabase.com", target: "_blank", rel: "noopener" }, "supabase.com"),
+            "To create a project: go to ", h("a", { href: "https://supabase.com", target: "_blank", rel: "noopener" }, "supabase.com"),
             ", create a free project, run the migration files from backend/supabase/migrations in its SQL Editor, then open ",
             h("strong", {}, "Project Settings → API"), " and copy the two values below."),
-          h("label", {}, "Project URL"), urlInput,
-          h("label", {}, "Anon public key (never the service_role key)"), keyInput,
+          h("label", {}, "Project URL (local preview only)"), urlInput,
+          h("label", {}, "Anon public key — never the service_role key (local preview only)"), keyInput,
           errorBox,
-          h("button", { class: "btn-primary", style: "margin-top:18px; width:100%", onclick: save }, "Connect"),
+          h("button", { class: "btn-primary", style: "margin-top:18px; width:100%", onclick: save }, "Preview on this device"),
           h("p", { class: "muted small", style: "margin-top:16px" },
-            "This is saved only in this browser, on this device. Nothing is sent anywhere else."))));
+            "This only previews the connection in this browser, on this device. It does not connect the site for anyone else."))));
   }
 
   // Renders a small "disconnect" control that clears the saved config and reloads.
