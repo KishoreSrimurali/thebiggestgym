@@ -150,6 +150,14 @@
     }
     const { data, error } = await db.auth.signInWithPassword({ email, password });
     if (error) {
+      // Not confirming the account yet is a real, actionable reason to surface —
+      // unlike wrong-username/wrong-password, saying this doesn't reveal anything
+      // an attacker could use (they already know this email, since the whole
+      // point of the message is "an account WITH this email needs confirming").
+      const code = (error.code || error.error_code || "").toLowerCase();
+      if (code === "email_not_confirmed" || /email.*not.*confirm/i.test(error.message || "")) {
+        return { data: null, error: { message: "This account's email hasn't been confirmed yet — check your inbox (and spam folder) for the confirmation link, or ask whoever set up the account to confirm it in Supabase." } };
+      }
       return { data: null, error: { message: GENERIC_LOGIN_ERROR } };
     }
     return { data, error: null };
