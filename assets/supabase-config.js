@@ -7,5 +7,5 @@
 // open Project Settings -> API and paste the two values below.
 //
 // Only the public "anon" key belongs here — never the service_role key.
-window.BG_SUPABASE_URL = "";
-window.BG_SUPABASE_ANON_KEY = "";
+window.BG_SUPABASE_URL = "https://tesykwwimvycfablypek.supabase.co";
+window.BG_SUPABASE_ANON_KEY = "sb_publishable_LXyrqN5kXTpV704veTnzmw_xwtxIVQN";
