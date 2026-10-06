@@ -104,12 +104,7 @@ function membershipSection() {
 
 function ptPackageSection() {
   const o = state.summary.owned_package;
-  if (!o) {
-    return h("div", { class: "card" },
-      h("p", {}, h("strong", {}, "No personal training package yet.")),
-      h("p", { class: "muted small", style: "margin-top:6px" }, "Browse trainers and packages below, then contact the gym to buy one — online checkout isn't set up yet."),
-      h("div", { class: "pill-row" }, contactCta("book a PT package")));
-  }
+  if (!o) return null; // gated: only visible once a coach upgrades this member to PT
   const left = (o.sessions_total || 0) - (o.sessions_used || 0);
   return h("div", { class: "card" },
     h("div", { class: "row", style: "justify-content:space-between" },
@@ -194,11 +189,11 @@ async function renderDashboard() {
         h("div", {}, h("div", { class: "kicker" }, "Welcome back"), h("h1", {}, name || "Member")),
         h("button", { class: "btn-ghost btn-small", onclick: editProfileDialog }, "Edit details")),
       h("div", { class: "section" }, h("h2", {}, "Your membership"), membershipSection()),
-      h("div", { class: "section" }, h("h2", {}, "Personal training"), ptPackageSection()),
-      h("div", { class: "section" }, h("h2", {}, "Upcoming PT sessions"), upcomingSection()),
+      state.summary.owned_package ? h("div", { class: "section" }, h("h2", {}, "Personal training"), ptPackageSection()) : null,
+      state.summary.owned_package ? h("div", { class: "section" }, h("h2", {}, "Upcoming PT sessions"), upcomingSection()) : null,
       announcementsSection(),
       h("div", { class: "section" }, h("h2", {}, "Membership plans"), plansSection()),
-      h("div", { class: "section" }, h("h2", {}, "PT packages"), packagesSection()),
+      state.summary.owned_package ? h("div", { class: "section" }, h("h2", {}, "PT packages"), packagesSection()) : null,
       h("div", { class: "section" }, h("h2", {}, "Trainers"), trainersSection()),
       h("p", { class: "honest-note" }, "Buying a plan or package online isn't set up yet — call ",
         h("a", { href: GYM_PHONE_TEL }, GYM_PHONE_DISPLAY), " or visit the gym to complete it."),
