@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Member portal &middot; The Biggest Gym Oman</title>
+<link rel="icon" type="image/png" href="../the-biggest-gym.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/shared.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="../assets/supabase-connect.js"></script>
+<style>
+  main{padding:32px clamp(16px,3vw,40px) 90px; max-width:900px; margin:0 auto;}
+  .grid{display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); margin-top:20px;}
+  .section{margin-top:40px;}
+  .section>h2{margin-bottom:14px; font-size:22px;}
+  .row{display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
+  .stat-n{font-family:'Anton',Impact,sans-serif; font-size:36px; color:var(--yellow); line-height:1;}
+  .stat-l{font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin-top:6px;}
+  .list-card{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
+  .pill-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;}
+  .two{display:grid; gap:0 16px; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));}
+  .honest-note{font-size:12px; color:var(--ink-dim); margin-top:10px;}
+</style>
+</head>
+<body>
+<div id="root" aria-live="polite"></div>
+
+<script>
+const h = BGConnect.h;
+const state = { db: null, user: null, summary: null, plans: [], packages: [], trainers: [] };
+const root = document.getElementById("root");
+
+const GYM_PHONE_DISPLAY = "79 1010 73";
+const GYM_PHONE_TEL = "tel:+96879101073";
+
+const fmtDate = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
+const fmtDay = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
+const fmtTime = new Intl.DateTimeFormat("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
+const dateOnly = (d) => d ? fmtDate.format(new Date(d.length === 10 ? d + "T12:00:00Z" : d)) : "";
+const when = (iso) => iso ? `${fmtDay.format(new Date(iso))}, ${fmtTime.format(new Date(iso))}` : "";
+const omr = (baisa) => { const v = Number(baisa || 0) / 1000; return (Number.isInteger(v) ? v.toLocaleString("en-GB") : v.toFixed(3)) + " OMR"; };
+const daysLeft = (endDate) => {
+  if (!endDate) return null;
+  const end = new Date(endDate.length === 10 ? endDate + "T00:00:00Z" : endDate);
+  const diff = Math.ceil((end - new Date()) / 86400000);
+  return diff;
+};
+function badgeFor(status) {
+  const map = { active: "ok", booked: "ok", completed: "ok", success: "ok", resolved: "ok", open: "warn", frozen: "warn",
+                pending: "warn", expired: "bad", cancelled: "bad", late_cancelled: "bad", no_show: "bad", refunded: "bad", failed: "bad" };
+  return h("span", { class: "badge " + (map[status] ?? "") }, String(status || "").replace("_", " "));
+}
+function toast(text, isError) {
+  const t = h("div", { class: "toast" + (isError ? " err" : "") }, text);
+  document.body.append(t); setTimeout(() => t.remove(), isError ? 6000 : 2800);
+}
+
+function contactCta(what) {
+  return h("a", { class: "btn-ghost btn-small", href: GYM_PHONE_TEL },
+    `Contact the gym to ${what}`);
+}
+
+function topbar() {
+  return h("div", { class: "portal-topbar" }, h("div", { class: "wrap" },
+    h("div", { class: "brand" }, h("img", { src: "../the-biggest-gym.png", alt: "" }), "THE BIGGEST ", h("span", {}, "GYM")),
+    h("div", { class: "row" },
+      h("span", { class: "muted small" }, state.user?.email || ""),
+      h("button", { class: "btn-ghost btn-small", onclick: async () => { await state.db.auth.signOut(); location.reload(); } }, "Sign out"))));
+}
+
+function statCard(n, l) {
+  return h("div", { class: "card" }, h("div", { class: "stat-n" }, n), h("div", { class: "stat-l" }, l));
+}
+
+async function loadCatalogue() {
+  const [p, k, t] = await Promise.all([
+    state.db.from("membership_plans").select("*").order("sort_order"),
+    state.db.from("pt_packages").select("*").order("sort_order"),
+    state.db.from("trainers").select("*").order("sort_order")]);
+  state.plans = p.data || []; state.packages = k.data || []; state.trainers = t.data || [];
+}
+
+function membershipSection() {
+  const m = state.summary.membership;
+  if (!m) {
+    return h("div", { class: "card" },
+      h("p", {}, h("strong", {}, "No active membership yet.")),
+      h("p", { class: "muted small", style: "margin-top:6px" }, "Pick a plan below, then visit the gym or call to complete payment and activate it — online checkout isn't set up yet."),
+      h("div", { class: "pill-row" }, contactCta("start a membership")));
+  }
+  const left = m.status === "active" ? daysLeft(m.end_date) : null;
+  return h("div", { class: "card" },
+    h("div", { class: "row", style: "justify-content:space-between" },
+      h("h3", {}, m.plan?.name || "Membership"), badgeFor(m.status)),
+    h("div", { class: "grid", style: "margin-top:14px; grid-template-columns:repeat(auto-fit,minmax(140px,1fr))" },
+      left != null ? statCard(left >= 0 ? left : 0, left >= 0 ? "Days remaining" : "Days overdue") : null,
+      statCard(dateOnly(m.start_date), "Started"),
+      statCard(dateOnly(m.end_date), "Ends")));
+}
+
+function ptPackageSection() {
+  const o = state.summary.owned_package;
+  if (!o) {
+    return h("div", { class: "card" },
+      h("p", {}, h("strong", {}, "No personal training package yet.")),
+      h("p", { class: "muted small", style: "margin-top:6px" }, "Browse trainers and packages below, then contact the gym to buy one — online checkout isn't set up yet."),
+      h("div", { class: "pill-row" }, contactCta("book a PT package")));
+  }
+  const left = (o.sessions_total || 0) - (o.sessions_used || 0);
+  return h("div", { class: "card" },
+    h("div", { class: "row", style: "justify-content:space-between" },
+      h("h3", {}, o.package?.name || "PT package"), badgeFor(left > 0 ? "active" : "expired")),
+    h("p", { class: "muted small", style: "margin-top:8px" }, "With ", h("strong", {}, o.trainer?.name || "your trainer")),
+    h("div", { class: "grid", style: "margin-top:14px; grid-template-columns:repeat(auto-fit,minmax(140px,1fr))" },
+      statCard(left, "Sessions left"), statCard(o.sessions_total, "Total sessions"), statCard(dateOnly(o.expires_at), "Use by")));
+}
+
+function upcomingSection() {
+  const rows = state.summary.upcoming || [];
+  if (!rows.length) return h("div", { class: "empty" }, "No upcoming PT sessions.");
+  return h("div", {}, rows.map((s) => h("div", { class: "card list-card", style: "margin-bottom:10px" },
+    h("div", {}, h("strong", {}, when(s.starts_at)), h("div", { class: "muted small" }, s.trainer?.name || "")),
+    badgeFor(s.status))));
+}
+
+function announcementsSection() {
+  const rows = state.summary.announcements || [];
+  if (!rows.length) return null;
+  return h("div", { class: "section" }, h("h2", {}, "Gym news"),
+    rows.map((a) => h("div", { class: "card", style: "margin-bottom:10px" },
+      h("div", { class: "muted small" }, dateOnly(a.published_at)), h("h3", { style: "margin-top:6px; font-size:17px" }, a.title), h("p", { class: "small", style: "margin-top:6px" }, a.body))));
+}
+
+function plansSection() {
+  if (!state.plans.length) return h("div", { class: "empty" }, "No membership plans are published yet. Check back soon, or ask the gym.");
+  return h("div", { class: "grid" }, state.plans.map((p) => h("div", { class: "card" },
+    h("div", { class: "row", style: "justify-content:space-between" }, h("h3", { style: "font-size:17px" }, p.name), p.is_featured ? h("span", { class: "badge y" }, "Most chosen") : null),
+    h("p", { class: "muted small", style: "margin-top:6px" }, p.summary),
+    h("div", { class: "stat-n", style: "margin-top:12px; font-size:26px" }, omr(p.price_baisa)),
+    h("div", { class: "muted small" }, `${p.duration_days} days`),
+    h("div", { class: "pill-row" }, contactCta("buy this plan")))));
+}
+
+function packagesSection() {
+  if (!state.packages.length) return h("div", { class: "empty" }, "No PT packages are published yet. Check back soon, or ask the gym.");
+  return h("div", { class: "grid" }, state.packages.map((k) => h("div", { class: "card" },
+    h("h3", { style: "font-size:17px" }, k.name),
+    h("p", { class: "muted small", style: "margin-top:6px" }, `${k.session_count} sessions, valid ${k.validity_days} days`),
+    h("div", { class: "stat-n", style: "margin-top:12px; font-size:26px" }, omr(k.price_baisa)),
+    h("div", { class: "pill-row" }, contactCta("buy this package")))));
+}
+
+function trainersSection() {
+  if (!state.trainers.length) return h("div", { class: "empty" }, "No trainers are published yet. Check back soon, or ask the gym.");
+  return h("div", { class: "grid" }, state.trainers.map((t) => h("div", { class: "card" },
+    h("h3", { style: "font-size:17px" }, t.name),
+    h("p", { class: "muted small", style: "margin-top:6px" }, t.headline),
+    (t.specialties || []).length ? h("p", { class: "small", style: "margin-top:8px" }, (t.specialties || []).join(", ")) : null,
+    h("div", { class: "pill-row" }, contactCta("book with " + t.name.split(" ")[0])))));
+}
+
+function editProfileDialog() {
+  const p = state.summary.member || {};
+  const dlg = h("dialog", { style: "background:var(--bg-raised); color:var(--ink); border:1px solid var(--line); padding:0; width:min(480px,94vw);" });
+  const first = h("input", { value: p.first_name || "" });
+  const last = h("input", { value: p.last_name || "" });
+  const phone = h("input", { value: p.phone || "", inputmode: "tel" });
+  dlg.append(
+    h("div", { style: "padding:20px" },
+      h("h3", {}, "Edit your details"),
+      h("label", {}, "First name"), first, h("label", {}, "Last name"), last, h("label", {}, "Phone"), phone,
+      h("div", { class: "row", style: "margin-top:18px; justify-content:flex-end" },
+        h("button", { class: "btn-ghost btn-small", onclick: () => dlg.close() }, "Cancel"),
+        h("button", { class: "btn-primary btn-small", onclick: async () => {
+          const { error } = await state.db.from("profiles").update({ first_name: first.value, last_name: last.value, phone: phone.value }).eq("id", state.user.id);
+          if (error) { toast(error.message, true); return; }
+          toast("Saved"); dlg.close(); start();
+        } }, "Save"))));
+  document.body.append(dlg); dlg.showModal();
+}
+
+async function renderDashboard() {
+  await loadCatalogue();
+  const p = state.summary.member || {};
+  const name = `${p.first_name || ""} ${p.last_name || ""}`.trim();
+  root.replaceChildren(
+    topbar(),
+    h("main", {},
+      h("div", { class: "row", style: "justify-content:space-between; align-items:flex-end" },
+        h("div", {}, h("div", { class: "kicker" }, "Welcome back"), h("h1", {}, name || "Member")),
+        h("button", { class: "btn-ghost btn-small", onclick: editProfileDialog }, "Edit details")),
+      h("div", { class: "section" }, h("h2", {}, "Your membership"), membershipSection()),
+      h("div", { class: "section" }, h("h2", {}, "Personal training"), ptPackageSection()),
+      h("div", { class: "section" }, h("h2", {}, "Upcoming PT sessions"), upcomingSection()),
+      announcementsSection(),
+      h("div", { class: "section" }, h("h2", {}, "Membership plans"), plansSection()),
+      h("div", { class: "section" }, h("h2", {}, "PT packages"), packagesSection()),
+      h("div", { class: "section" }, h("h2", {}, "Trainers"), trainersSection()),
+      h("p", { class: "honest-note" }, "Buying a plan or package online isn't set up yet — call ",
+        h("a", { href: GYM_PHONE_TEL }, GYM_PHONE_DISPLAY), " or visit the gym to complete it."),
+      h("div", { style: "margin-top:30px" }, BGConnect.disconnectButton())));
+}
+
+function signInScreen(message) {
+  const go = () => state.db.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } });
+  root.replaceChildren(h("div", { class: "signin-screen" }, h("div", { class: "box card" },
+    h("div", { class: "brand" }, "THE BIGGEST ", h("span", {}, "GYM")),
+    h("h2", { style: "margin-top:4px" }, "Member sign in"),
+    message ? h("p", { class: "small", role: "alert", style: "color:var(--red); margin-top:10px" }, message)
+            : h("p", { class: "muted small", style: "margin-top:10px" }, "Sign in with the same Google account you use elsewhere at the gym."),
+    h("button", { class: "oauth-google", onclick: go }, "Continue with Google"),
+    h("div", { style: "margin-top:20px" }, BGConnect.disconnectButton("Not the right gym? Disconnect"))
+  )));
+}
+
+async function start() {
+  const config = BGConnect.readConfig();
+  if (!config) { BGConnect.renderSetupScreen(root, "the member portal", start); return; }
+  state.db = supabase.createClient(config.url, config.key);
+
+  const { data } = await state.db.auth.getSession();
+  if (!data.session) return signInScreen();
+  state.user = data.session.user;
+
+  try {
+    const { data: summary, error } = await state.db.rpc("home_summary");
+    if (error) throw error;
+    state.summary = summary;
+    await renderDashboard();
+  } catch (e) {
+    root.replaceChildren(h("div", { class: "signin-screen" }, h("div", { class: "box card" },
+      h("h2", {}, "Couldn't load your account"),
+      h("p", { class: "muted small", style: "margin-top:10px" }, e?.message || String(e)),
+      h("div", { class: "row", style: "margin-top:16px" },
+        h("button", { class: "btn-ghost btn-small", onclick: async () => { await state.db.auth.signOut(); location.reload(); } }, "Sign out"),
+        BGConnect.disconnectButton()))));
+  }
+}
+
+start();
+</script>
+</body>
+</html>

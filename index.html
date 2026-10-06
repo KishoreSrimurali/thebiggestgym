@@ -96,7 +96,7 @@
     border-bottom:1px solid var(--line); z-index:49;
     max-height:0; overflow:hidden; transition:max-height .35s ease;
   }
-  .mobile-panel.open{max-height:320px;}
+  .mobile-panel.open{max-height:calc(100vh - 72px); overflow-y:auto;}
   .mobile-panel .wrap{display:flex; flex-direction:column; gap:0; padding:6px 28px 22px;}
   .mobile-panel a{padding:14px 0; border-bottom:1px solid var(--line); font-size:15px; color:var(--ink);}
 
@@ -836,6 +836,8 @@
     <a href="#faq" data-i18n="navFAQ">FAQ</a>
     <a href="#reviews" data-i18n="navReviews">Reviews</a>
     <a href="#visit" data-i18n="navVisit">Visit</a>
+    <a href="client/index.html" data-i18n="navClientLogin">Client Login</a>
+    <a href="staff/index.html" data-i18n="navStaffLogin">Staff Login</a>
     <a href="tel:+96879101073" data-i18n="navCallBtn">Call 79 1010 73</a>
     <button class="lang-toggle lang-toggle-mobile" data-lang-toggle aria-label="Switch language / تبديل اللغة">العربية</button>
   </div>
@@ -1720,6 +1722,14 @@ var translations = {
   "navCallBtn": {
     "en": "Call 79 1010 73",
     "ar": "اتصل 79 1010 73"
+  },
+  "navClientLogin": {
+    "en": "Client Login",
+    "ar": "دخول الأعضاء"
+  },
+  "navStaffLogin": {
+    "en": "Staff Login",
+    "ar": "دخول الموظفين"
   },
   "heroTag": {
     "en": "MBD, RUWI — MUSCAT",
