@@ -206,15 +206,80 @@ async function renderDashboard() {
 }
 
 function signInScreen(message) {
-  const go = () => state.db.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } });
-  root.replaceChildren(h("div", { class: "signin-screen" }, h("div", { class: "box card" },
-    h("div", { class: "brand" }, "THE BIGGEST ", h("span", {}, "GYM")),
-    h("h2", { style: "margin-top:4px" }, "Member sign in"),
-    message ? h("p", { class: "small", role: "alert", style: "color:var(--red); margin-top:10px" }, message)
-            : h("p", { class: "muted small", style: "margin-top:10px" }, "Sign in with the same Google account you use elsewhere at the gym."),
-    h("button", { class: "oauth-google", onclick: go }, "Continue with Google"),
-    h("div", { style: "margin-top:20px" }, BGConnect.disconnectButton("Not the right gym? Disconnect"))
-  )));
+  let mode = "login"; // "login" or "signup"
+
+  const emailOrUser = h("input", { type: "text", autocomplete: "username", placeholder: "you@example.com or your username" });
+  const signupEmail = h("input", { type: "email", autocomplete: "email", placeholder: "you@example.com" });
+  const signupUsername = h("input", { type: "text", autocomplete: "username", placeholder: "Pick a username" });
+  const password = h("input", { type: "password", autocomplete: "current-password", placeholder: "Password" });
+  const signupPassword = h("input", { type: "password", autocomplete: "new-password", placeholder: "Password (10+ characters)" });
+  const confirmPassword = h("input", { type: "password", autocomplete: "new-password", placeholder: "Confirm password" });
+  const statusBox = h("p", { class: "small", role: "alert", style: "margin-top:10px; display:none" });
+  const submitBtn = h("button", { class: "btn-primary", style: "width:100%; margin-top:16px" }, "Log in");
+
+  function showStatus(text, isError) {
+    statusBox.textContent = text;
+    statusBox.style.color = isError ? "var(--red)" : "var(--ink-dim)";
+    statusBox.style.display = text ? "block" : "none";
+  }
+
+  async function doLogin() {
+    showStatus("");
+    const { error } = await BGConnect.loginWithIdentifier(state.db, emailOrUser.value, password.value);
+    if (error) { showStatus(error.message, true); return; }
+    location.reload();
+  }
+
+  async function doSignup() {
+    showStatus("");
+    const email = signupEmail.value.trim();
+    const username = signupUsername.value.trim();
+    if (!email || !username) { showStatus("Enter an email and a username.", true); return; }
+    if (signupPassword.value !== confirmPassword.value) { showStatus("Passwords don't match.", true); return; }
+    const issues = BGConnect.passwordIssues(signupPassword.value);
+    if (issues.length) { showStatus(issues.join(" "), true); return; }
+    const { data, error } = await state.db.auth.signUp({
+      email, password: signupPassword.value, options: { data: { username } },
+    });
+    if (error) { showStatus(error.message, true); return; }
+    if (!data.session) {
+      showStatus("Almost there — check your email to confirm your account, then log in.", false);
+      mode = "login"; render();
+      return;
+    }
+    location.reload();
+  }
+
+  function render() {
+    submitBtn.textContent = mode === "signup" ? "Create account" : "Log in";
+    submitBtn.onclick = mode === "signup" ? doSignup : doLogin;
+    const toggle = h("button", { class: "btn-ghost btn-small", style: "width:100%; margin-top:10px",
+      onclick: () => { mode = mode === "signup" ? "login" : "signup"; showStatus(""); render(); } },
+      mode === "signup" ? "Already have an account? Log in" : "New here? Create an account");
+
+    const fields = mode === "signup"
+      ? h("div", {},
+          h("label", {}, "Email"), signupEmail,
+          h("label", {}, "Username"), signupUsername,
+          h("label", {}, "Password"), signupPassword,
+          h("label", {}, "Confirm password"), confirmPassword)
+      : h("div", {},
+          h("label", {}, "Email or username"), emailOrUser,
+          h("label", {}, "Password"), password);
+
+    root.replaceChildren(h("div", { class: "signin-screen" }, h("div", { class: "box card" },
+      h("div", { class: "brand" }, "THE BIGGEST ", h("span", {}, "GYM")),
+      h("h2", { style: "margin-top:4px" }, mode === "signup" ? "Create your account" : "Member sign in"),
+      message && mode === "login" ? h("p", { class: "small", role: "alert", style: "color:var(--red); margin-top:10px" }, message) : null,
+      fields,
+      statusBox,
+      submitBtn,
+      toggle,
+      h("div", { style: "margin-top:20px" }, BGConnect.disconnectButton("Not the right gym? Disconnect"))
+    )));
+  }
+
+  render();
 }
 
 async function start() {

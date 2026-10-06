@@ -105,5 +105,58 @@
     return h("button", { class: "btn-ghost btn-small", onclick: () => { if (confirm("Forget the connected Supabase project on this device?")) { clearConfig(); location.reload(); } } }, label);
   }
 
-  global.BGConnect = { readConfig, writeConfig, clearConfig, renderSetupScreen, disconnectButton, h };
+  // ---------------------------------------------------------------------
+  // Shared email/username + password auth helpers for the client and
+  // staff portals. Keeping this logic in one place means both portals
+  // check passwords and resolve usernames the same way.
+  // ---------------------------------------------------------------------
+
+  const GENERIC_LOGIN_ERROR = "Email/username or password is incorrect";
+
+  // Returns an array of plain-English problems with the password, or an
+  // empty array if it's acceptable. Rule: 10+ characters, and at least
+  // two of {uppercase, lowercase, digit, symbol}.
+  function passwordIssues(password) {
+    const pw = String(password || "");
+    const issues = [];
+    if (pw.length < 10) issues.push("Use at least 10 characters.");
+    const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter((re) => re.test(pw)).length;
+    if (classes < 2) {
+      issues.push("Mix in at least two of: lowercase letters, uppercase letters, numbers, symbols.");
+    }
+    return issues;
+  }
+
+  // Resolves a login identifier (email or username) to the email Supabase
+  // Auth needs, then signs in. Never reveals whether the identifier or the
+  // password was the problem - every failure returns the same generic
+  // error message, so this never confirms whether a username/email exists.
+  async function loginWithIdentifier(db, identifier, password) {
+    const id = String(identifier || "").trim();
+    if (!id || !password) {
+      return { data: null, error: { message: GENERIC_LOGIN_ERROR } };
+    }
+    let email = id;
+    if (!id.includes("@")) {
+      try {
+        const { data: resolved, error: rpcError } = await db.rpc("email_for_username", { p_username: id });
+        if (rpcError || !resolved) {
+          return { data: null, error: { message: GENERIC_LOGIN_ERROR } };
+        }
+        email = resolved;
+      } catch (e) {
+        return { data: null, error: { message: GENERIC_LOGIN_ERROR } };
+      }
+    }
+    const { data, error } = await db.auth.signInWithPassword({ email, password });
+    if (error) {
+      return { data: null, error: { message: GENERIC_LOGIN_ERROR } };
+    }
+    return { data, error: null };
+  }
+
+  global.BGConnect = {
+    readConfig, writeConfig, clearConfig, renderSetupScreen, disconnectButton, h,
+    passwordIssues, loginWithIdentifier, GENERIC_LOGIN_ERROR,
+  };
 })(window);
