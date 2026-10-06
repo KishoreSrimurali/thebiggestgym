@@ -203,8 +203,7 @@ async function renderDashboard() {
 function signInScreen(message) {
   let mode = "login"; // "login" or "signup"
 
-  const emailOrUser = h("input", { type: "text", autocomplete: "username", placeholder: "you@example.com or your username" });
-  const signupEmail = h("input", { type: "email", autocomplete: "email", placeholder: "you@example.com" });
+  const emailOrUser = h("input", { type: "text", autocomplete: "username", placeholder: "Your username" });
   const signupUsername = h("input", { type: "text", autocomplete: "username", placeholder: "Pick a username" });
   const password = h("input", { type: "password", autocomplete: "current-password", placeholder: "Password" });
   const signupPassword = h("input", { type: "password", autocomplete: "new-password", placeholder: "Password (10+ characters)" });
@@ -225,20 +224,34 @@ function signInScreen(message) {
     location.reload();
   }
 
+  // Supabase Auth always needs an email on the account, but members never type
+  // one — we derive a private, non-deliverable placeholder from their username
+  // so it stays unique and stable. It's never shown anywhere in the UI.
+  function placeholderEmail(username) {
+    const slug = username.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    return slug ? `${slug}@members.thebiggestgymoman.com` : "";
+  }
+
   async function doSignup() {
     showStatus("");
-    const email = signupEmail.value.trim();
     const username = signupUsername.value.trim();
-    if (!email || !username) { showStatus("Enter an email and a username.", true); return; }
+    if (!/^[A-Za-z0-9_.-]{3,30}$/.test(username)) {
+      showStatus("Username must be 3-30 characters: letters, numbers, dots, dashes or underscores only.", true);
+      return;
+    }
     if (signupPassword.value !== confirmPassword.value) { showStatus("Passwords don't match.", true); return; }
     const issues = BGConnect.passwordIssues(signupPassword.value);
     if (issues.length) { showStatus(issues.join(" "), true); return; }
+    const email = placeholderEmail(username);
     const { data, error } = await state.db.auth.signUp({
       email, password: signupPassword.value, options: { data: { username } },
     });
-    if (error) { showStatus(error.message, true); return; }
+    if (error) {
+      showStatus(/registered|exists/i.test(error.message) ? "That username is already taken." : error.message, true);
+      return;
+    }
     if (!data.session) {
-      showStatus("Almost there — check your email to confirm your account, then log in.", false);
+      showStatus("Your account needs confirming before you can log in — ask the gym to confirm it for you.", false);
       mode = "login"; render();
       return;
     }
@@ -254,12 +267,11 @@ function signInScreen(message) {
 
     const fields = mode === "signup"
       ? h("div", {},
-          h("label", {}, "Email"), signupEmail,
           h("label", {}, "Username"), signupUsername,
           h("label", {}, "Password"), signupPassword,
           h("label", {}, "Confirm password"), confirmPassword)
       : h("div", {},
-          h("label", {}, "Email or username"), emailOrUser,
+          h("label", {}, "Username"), emailOrUser,
           h("label", {}, "Password"), password);
 
     root.replaceChildren(h("div", { class: "signin-screen" }, h("div", { class: "box card" },
