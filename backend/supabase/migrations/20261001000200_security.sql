@@ -53,7 +53,7 @@ alter table public.notification_prefs add constraint payments_always_on check (t
 
 -- Members may edit only these profile columns. In particular, never their own role.
 revoke update on public.profiles from authenticated, anon;
-grant update (first_name, last_name, email, date_of_birth, goal, experience,
+grant update (first_name, last_name, email, phone, date_of_birth, goal, experience,
               trainer_sees_goals, share_progress_photos) on public.profiles to authenticated;
 
 -- Nothing for signed-out visitors.
