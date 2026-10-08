@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Staff panel &middot; The Biggest Gym Oman</title>
+<link rel="icon" type="image/png" href="../the-biggest-gym.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/shared.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="../assets/supabase-config.js"></script>
+<script src="../assets/supabase-connect.js"></script>
+<style>
+/* Staff-panel-only aliases on top of the shared tokens from assets/shared.css
+   (--bg, --ink, --yellow, --line, --ink-dim, --green, --orange, --red). */
+:root{
+  --surface:var(--bg-raised);
+  --raised:var(--bg-raised-2);
+  --strong:#4A4842;
+  --text:var(--ink);
+  --body:#CFC9BC;
+  --muted:var(--ink-dim);
+}
+html,body{font:15px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;}
+h1,h2,h3{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.3px;margin:0}
+h1{font-size:34px;line-height:1.05}h2{font-size:24px}h3{font-size:19px}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+nav{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{font-family:Anton,Impact,sans-serif;font-size:22px;line-height:1.05;padding:0 8px 18px;display:flex;align-items:center;gap:8px}
+.brand img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.brand span{color:var(--yellow)}
+nav button{display:flex;width:100%;align-items:center;gap:10px;padding:11px 12px;border:0;background:none;text-align:left;font-weight:600;color:var(--body);cursor:pointer;min-height:44px}
+nav button:hover{background:var(--raised);color:var(--text)}
+nav button[aria-current="page"]{background:var(--yellow);color:#141210}
+nav .who{margin-top:18px;padding:12px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+main{padding:28px clamp(16px,3vw,40px) 80px;max-width:1200px;width:100%;min-width:0}
+.app>*{min-width:0}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--yellow)}
+.head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:22px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr))}
+@media (max-width:520px){.grid{grid-template-columns:1fr 1fr}.stat .n{font-size:30px}}
+.card{background:var(--surface);border:1px solid var(--line);padding:18px}
+.stat .n{font-family:Anton,Impact,sans-serif;font-size:42px;line-height:1;color:var(--yellow)}
+.stat .l{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.section{margin-top:30px}
+.section>h2{margin-bottom:12px}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line)}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:var(--raised)}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--raised)}
+.scroll{overflow-x:auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 16px;border:1px solid var(--strong);background:transparent;font-weight:700;font-size:13px;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--text)}
+.btn.primary{background:var(--yellow);color:#141210;border-color:var(--yellow);clip-path:polygon(10px 0,100% 0,100% 100%,0 100%);padding-left:20px}
+.btn.danger{color:var(--red);border-color:rgba(255,107,94,.5)}
+.btn.small{min-height:32px;padding:4px 10px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:3px 8px;background:rgba(171,165,151,.15);color:var(--muted)}
+.badge.ok{background:rgba(61,214,140,.15);color:var(--green)}
+.badge.warn{background:rgba(255,159,67,.15);color:var(--orange)}
+.badge.bad{background:rgba(255,107,94,.15);color:var(--red)}
+.badge.y{background:var(--yellow);color:#141210}
+label{display:block;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
+input,select,textarea{width:100%;min-height:42px;padding:9px 11px;background:var(--bg);border:1px solid var(--strong)}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+input[type=checkbox]{width:20px;min-height:20px;accent-color:var(--yellow)}
+.check{display:flex;gap:10px;align-items:center;text-transform:none;letter-spacing:0;font-size:15px;color:var(--text);font-weight:500}
+textarea{min-height:90px;resize:vertical}
+.two{display:grid;gap:0 16px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.muted{color:var(--muted)}.small{font-size:13px}
+dialog{background:var(--surface);color:var(--text);border:1px solid var(--strong);padding:0;width:min(720px,94vw);max-height:90vh}
+dialog::backdrop{background:rgba(0,0,0,.7)}
+.dlg-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:1}
+.dlg-body{padding:6px 20px 20px}
+.dlg-foot{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line);position:sticky;bottom:0;background:var(--surface)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:#141210;padding:12px 18px;font-weight:700;z-index:99;max-width:90vw}
+.toast.err{background:var(--red);color:#fff}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--strong)}
+.thread{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.bubble{max-width:80%;padding:10px 12px;background:var(--raised)}
+.bubble.staff{align-self:flex-end;background:var(--yellow);color:#141210}
+.signin{min-height:100vh;display:grid;place-items:center;padding:24px}
+.signin .box{width:min(420px,100%)}
+.signin .brand{font-size:44px;padding:0 0 24px;justify-content:center}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  nav{position:sticky;top:0;height:auto;z-index:5;display:flex;gap:4px;overflow-x:auto;padding:10px;border-right:0;border-bottom:1px solid var(--line)}
+  nav .brand,nav .who{display:none}
+  nav button{width:auto;flex:0 0 auto;padding:8px 12px}
+}
+</style>
+</head>
+<body>
+<div id="root" aria-live="polite"></div>
+<dialog id="dlg"></dialog>
+
+<script>
+// GYM_UTC_OFFSET is Oman's fixed time zone offset, not a credential — it stays hardcoded.
+// The Supabase project URL and anon key are NOT hardcoded: they come from a one-time
+// "connect your project" step (see assets/supabase-connect.js), stored in this browser's
+// localStorage, exactly like the member portal at client/index.html.
+const GYM_UTC_OFFSET = "+04:00"; // Muscat time, used for times typed into forms
+let db = null;
+const state = { tab: "today", role: null, user: null, trainers: [], plans: [], packages: [], staffNames: {} };
+const root = document.getElementById("root");
+const dlg = document.getElementById("dlg");
+
+// ---------- tiny helpers ----------
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "html") el.innerHTML = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : String(kid));
+  return el;
+}
+const fmtTime = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Muscat", hour: "numeric", minute: "2-digit", hour12: true });
+const fmtDay = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Muscat", weekday: "short", day: "numeric", month: "short" });
+const fmtDate = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Muscat", day: "numeric", month: "short", year: "numeric" });
+const when = (iso) => iso ? `${fmtDay.format(new Date(iso))}, ${fmtTime.format(new Date(iso))}` : "";
+const dateOnly = (d) => d ? fmtDate.format(new Date(d.length === 10 ? d + "T12:00:00Z" : d)) : "";
+const omr = (baisa) => { const v = Number(baisa || 0) / 1000; return (Number.isInteger(v) ? v.toLocaleString("en-GB") : v.toFixed(3)) + " OMR"; };
+const toBaisa = (text) => Math.round(parseFloat(String(text).replace(/,/g, "")) * 1000);
+const fullName = (p) => `${p.first_name || ""} ${p.last_name || ""}`.trim() || p.email || "Unnamed member";
+const localInput = (iso) => { // ISO -> value for <input type=datetime-local> in gym time
+  const d = new Date(new Date(iso).getTime() + 4 * 3600e3); return d.toISOString().slice(0, 16);
+};
+const fromLocal = (value) => new Date(value + ":00" + GYM_UTC_OFFSET).toISOString();
+const today = () => new Date(Date.now() + 4 * 3600e3).toISOString().slice(0, 10);
+const addDays = (dateText, n) => { const d = new Date(dateText + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+
+const errorText = {
+  NOT_STAFF: "This account isn't a coach yet. Ask the owner to give you access.",
+  OWNER_ONLY: "Only the owner can change roles.",
+  CANNOT_CHANGE_OWN_ROLE: "You can't change your own role.",
+  SLOT_UNAVAILABLE: "That time overlaps another session for this trainer or member.",
+  NO_CREDITS: "This member has no sessions left with that trainer. Record a PT package payment first.",
+  SESSION_NOT_ACTIVE: "That session is no longer active.",
+  ORDER_NOT_REFUNDABLE: "Only paid orders can be refunded.",
+  ITEM_UNAVAILABLE: "That plan or package isn't available.",
+};
+function explain(error) {
+  const msg = error?.message || String(error);
+  for (const [code, text] of Object.entries(errorText)) if (msg.includes(code)) return text;
+  if (msg.includes("row-level security") || msg.includes("permission denied")) return "You don't have permission to do that.";
+  return msg;
+}
+function toast(text, isError = false) {
+  const t = h("div", { class: "toast" + (isError ? " err" : ""), role: "status" }, text);
+  document.body.append(t); setTimeout(() => t.remove(), isError ? 6000 : 2800);
+}
+async function run(promise, okText) {
+  const { data, error } = await promise;
+  if (error) { toast(explain(error), true); throw error; }
+  if (okText) toast(okText);
+  return data;
+}
+function badgeFor(status) {
+  const map = { active: "ok", booked: "ok", completed: "ok", success: "ok", resolved: "ok", open: "warn", waiting: "", frozen: "warn",
+                pending: "warn", expired: "bad", cancelled: "bad", late_cancelled: "bad", no_show: "bad", refunded: "bad", failed: "bad" };
+  return h("span", { class: "badge " + (map[status] ?? "") }, String(status).replace("_", " "));
+}
+
+// ---------- dialog ----------
+function openDialog(title, body, actions) {
+  const parts = [
+    h("div", { class: "dlg-head" }, h("h3", {}, title), h("button", { class: "btn small", onclick: () => dlg.close(), "aria-label": "Close" }, "Close")),
+    h("div", { class: "dlg-body" }, body)];
+  if (actions) parts.push(h("div", { class: "dlg-foot" }, actions));
+  dlg.replaceChildren(...parts);
+  if (!dlg.open) dlg.showModal();
+}
+function field(labelText, input) { return h("div", {}, h("label", {}, labelText), input); }
+function form(fields, onSave, saveText = "Save") {
+  const values = () => Object.fromEntries(Object.entries(fields).map(([k, el]) =>
+    [k, el.type === "checkbox" ? el.checked : el.value]));
+  const button = h("button", { class: "btn primary", onclick: async () => {
+    button.disabled = true;
+    try { await onSave(values()); dlg.close(); } catch (e) { /* toast shown */ } finally { button.disabled = false; }
+  } }, saveText);
+  return button;
+}
+const input = (value = "", attrs = {}) => h("input", { value: value ?? "", ...attrs });
+const checkbox = (checked) => { const c = h("input", { type: "checkbox" }); c.checked = !!checked; return c; };
+const select = (options, value) => {
+  const s = h("select", {}, options.map(([v, label]) => h("option", { value: v }, label)));
+  if (value != null) s.value = value; return s;
+};
+
+// ---------- data used across screens ----------
+async function loadCatalogue() {
+  const [t, p, k] = await Promise.all([
+    db.from("trainers").select("*").order("sort_order"),
+    db.from("membership_plans").select("*").order("sort_order"),
+    db.from("pt_packages").select("*").order("sort_order")]);
+  state.trainers = t.data || []; state.plans = p.data || []; state.packages = k.data || [];
+}
+
+// ---------- shell ----------
+const tabs = [
+  ["today", "Today"], ["members", "Members"], ["bookings", "Bookings"], ["trainers", "Trainers"],
+  ["plans", "Plans and prices"], ["news", "News"], ["support", "Support"], ["payments", "Payments"],
+  ["settings", "Gym settings"], ["activity", "Activity log"]];
+
+function shell(content) {
+  root.replaceChildren(h("div", { class: "app" },
+    h("nav", { "aria-label": "Sections" },
+      h("div", { class: "brand" }, h("img", { src: "../the-biggest-gym.png", alt: "" }), "THE BIGGEST", h("br"), h("span", {}, "GYM"), " STAFF PANEL"),
+      tabs.map(([id, label]) => h("button", { "aria-current": state.tab === id ? "page" : null,
+        onclick: () => { state.tab = id; render(); } }, label)),
+      h("div", { class: "who" }, state.user?.email || "", h("br"), "Role: ", state.role || "",
+        h("div", { style: "margin-top:10px" }, h("button", { class: "btn small", onclick: async () => { await db.auth.signOut(); location.reload(); } }, "Sign out")),
+        h("div", { style: "margin-top:8px" }, BGConnect.disconnectButton()))),
+    h("main", {}, content)));
+}
+
+async function render() {
+  const screens = { today: Today, members: Members, bookings: Bookings, trainers: Trainers, plans: Plans,
+                    news: News, support: Support, payments: Payments, settings: Settings, activity: Activity };
+  shell(h("p", { class: "muted" }, "Loading…"));
+  try { shell(await screens[state.tab]()); }
+  catch (e) { shell(h("div", { class: "empty" }, "Couldn't load this section: ", explain(e))); }
+}
+
+// ---------- Today ----------
+async function Today() {
+  const d = await run(db.rpc("staff_dashboard"));
+  return h("div", {},
+    h("div", { class: "head" }, h("div", {}, h("div", { class: "eyebrow" }, fmtDate.format(new Date())), h("h1", {}, "Today at the gym"))),
+    h("div", { class: "grid" },
+      stat(d.active_members, "Active members"), stat(omr(d.revenue_month_baisa), "Revenue this month"),
+      stat(d.new_members_month, "New members this month"), stat(d.open_tickets, "Open support messages")),
+    h("div", { class: "section" }, h("h2", {}, "PT sessions today"),
+      d.today.length ? sessionTable(d.today, true) : h("div", { class: "empty" }, "No PT sessions today.")),
+    h("div", { class: "section" }, h("h2", {}, "Memberships ending this week"),
+      d.expiring.length ? h("div", { class: "scroll" }, h("table", {},
+        h("thead", {}, h("tr", {}, h("th", {}, "Member"), h("th", {}, "Plan"), h("th", {}, "Ends"))),
+        h("tbody", {}, d.expiring.map((m) => h("tr", { class: "click", onclick: () => openMember(m.member_id) },
+          h("td", {}, m.member_name || "Member"), h("td", {}, m.plan), h("td", {}, dateOnly(m.end_date)))))))
+        : h("div", { class: "empty" }, "Nobody's membership ends in the next 7 days.")));
+}
+const stat = (n, l) => h("div", { class: "card stat" }, h("div", { class: "n" }, n), h("div", { class: "l" }, l));
+
+function sessionTable(rows, withMember, done = render) {
+  return h("div", { class: "scroll" }, h("table", {},
+    h("thead", {}, h("tr", {}, h("th", {}, "When"), withMember ? h("th", {}, "Member") : null, h("th", {}, "Trainer"), h("th", {}, "Status"), h("th", {}, ""))),
+    h("tbody", {}, rows.map((s) => h("tr", {},
+      h("td", {}, when(s.starts_at)),
+      withMember ? h("td", {}, h("a", { href: "#", onclick: (e) => { e.preventDefault(); openMember(s.member_id); } }, s.member_name || "Member")) : null,
+      h("td", {}, s.trainer_name || ""), h("td", {}, badgeFor(s.status)),
+      h("td", {}, sessionActions(s, done)))))));
+}
+function sessionActions(s, done = render) {
+  const set = (status, credit) => run(db.rpc("staff_set_session_status", { p_session: s.id, p_status: status, p_return_credit: credit }), "Saved").then(done);
+  if (s.status !== "booked") return h("button", { class: "btn small", onclick: () => set("booked", false) }, "Undo");
+  return h("div", { class: "row" },
+    h("button", { class: "btn small", onclick: () => set("completed", false) }, "Attended"),
+    h("button", { class: "btn small", onclick: () => set("no_show", false) }, "No-show"),
+    h("button", { class: "btn small", onclick: () => moveSession(s, done) }, "Move"),
+    h("button", { class: "btn small danger", onclick: () => cancelSession(s, done) }, "Cancel"));
+}
+function moveSession(s, done = render) {
+  const at = input(localInput(s.starts_at), { type: "datetime-local" });
+  openDialog("Move session", field("New start (gym time)", at),
+    form({ at }, (v) => run(db.rpc("staff_move_session", { p_session: s.id, p_starts_at: fromLocal(v.at) }), "Session moved").then(done), "Move"));
+}
+function cancelSession(s, done = render) {
+  const credit = checkbox(true);
+  openDialog("Cancel session", h("div", {}, h("p", {}, "The member gets a notification."),
+    h("label", { class: "check" }, credit, "Give the session back to their package")),
+    form({ credit }, (v) => run(db.rpc("staff_set_session_status", { p_session: s.id, p_status: "cancelled", p_return_credit: v.credit }), "Cancelled").then(done), "Cancel session"));
+}
+
+// ---------- Members ----------
+async function Members() {
+  const search = input(state.memberSearch || "", { type: "search", placeholder: "Search name, email or phone", "aria-label": "Search members" });
+  const list = h("div", {});
+  const load = async () => {
+    state.memberSearch = search.value;
+    const rows = await run(db.rpc("staff_members", { p_search: search.value }));
+    list.replaceChildren(rows.length ? h("div", { class: "scroll" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", {}, "Member"), h("th", {}, "Contact"), h("th", {}, "Membership"), h("th", {}, "PT left"), h("th", {}, "Role"))),
+      h("tbody", {}, rows.map((m) => h("tr", { class: "click", onclick: () => openMember(m.id) },
+        h("td", {}, fullName(m)), h("td", { class: "small" }, m.email || "", m.phone ? h("div", {}, m.phone) : null),
+        h("td", {}, m.membership ? h("span", {}, m.membership.plan_name, " ", badgeFor(m.membership.status),
+          h("div", { class: "small muted" }, "Ends ", dateOnly(m.membership.end_date))) : h("span", { class: "muted" }, "None")),
+        h("td", {}, m.sessions_left), h("td", {}, m.role === "member" ? "" : h("span", { class: "badge y" }, m.role)))))))
+      : h("div", { class: "empty" }, "No members match."));
+  };
+  let timer; search.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(load, 300); });
+  await load();
+  return h("div", {}, h("div", { class: "head" }, h("h1", {}, "Members")),
+    h("p", { class: "muted" }, "Members appear here after they sign in for the first time."), search, h("div", { style: "margin-top:16px" }, list));
+}
+
+async function openMember(id) {
+  await loadCatalogue();
+  const m = await run(db.rpc("staff_member_detail", { p_member: id }));
+  const refresh = () => openMember(id);
+  const body = h("div", {},
+    h("p", { class: "muted small" }, m.email || "", m.phone ? " · " + m.phone : "", " · joined ", dateOnly(m.created_at)),
+    h("div", { class: "row" },
+      h("button", { class: "btn primary", onclick: () => recordPayment(m, refresh) }, "Record payment"),
+      h("button", { class: "btn", onclick: () => bookFor(m, refresh) }, "Book PT"),
+      h("button", { class: "btn", onclick: () => grantMembership(m, refresh) }, "Free membership"),
+      h("button", { class: "btn", onclick: () => editMember(m, refresh) }, "Edit details"),
+      state.role === "owner" || state.role === "admin" ? h("button", { class: "btn", onclick: () => setRole(m, refresh) }, "Role") : null),
+    h("h3", { style: "margin-top:22px" }, "Memberships"),
+    m.memberships.length ? miniTable(["Plan", "From", "To", "Status", ""], m.memberships.map((x) => [
+      x.plan_name, dateOnly(x.start_date), dateOnly(x.end_date), badgeFor(x.status),
+      h("button", { class: "btn small", onclick: () => editMembership(x, refresh) }, "Change")])) : h("p", { class: "muted" }, "None yet."),
+    h("h3", { style: "margin-top:22px" }, "PT packages"),
+    m.packages.length ? miniTable(["Package", "Trainer", "Used", "Expires", ""], m.packages.map((x) => [
+      x.package_name, x.trainer_name, `${x.sessions_used} of ${x.sessions_total}`, dateOnly(x.expires_at),
+      h("button", { class: "btn small", onclick: () => editPackage(x, refresh) }, "Change")])) : h("p", { class: "muted" }, "None yet."),
+    h("h3", { style: "margin-top:22px" }, "Sessions"),
+    m.sessions.length ? sessionTable(m.sessions, false, refresh) : h("p", { class: "muted" }, "No sessions."),
+    h("h3", { style: "margin-top:22px" }, "Payments"),
+    m.receipts.length ? miniTable(["Receipt", "Date", "For", "Amount", "Status", ""], m.receipts.map((r) => [
+      r.number, dateOnly(r.created_at), r.product, omr(r.amount_baisa), badgeFor(r.status),
+      r.status === "success" ? h("button", { class: "btn small danger", onclick: () => refund(r, refresh) }, "Refund") : ""])) : h("p", { class: "muted" }, "No payments."));
+  openDialog(fullName(m), body);
+}
+const miniTable = (heads, rows) => h("div", { class: "scroll" }, h("table", {},
+  h("thead", {}, h("tr", {}, heads.map((x) => h("th", {}, x)))), h("tbody", {}, rows.map((r) => h("tr", {}, r.map((c) => h("td", {}, c)))))));
+
+function recordPayment(m, done) {
+  const kind = select([["membership", "Membership"], ["pt_package", "PT package"]], "membership");
+  const item = h("select", {}); const trainerWrap = h("div", {});
+  const trainer = select(state.trainers.map((t) => [t.id, t.name]));
+  const method = select([["Cash at reception", "Cash"], ["Card machine", "Card machine"], ["Bank transfer", "Bank transfer"]]);
+  const fill = () => {
+    const list = kind.value === "membership" ? state.plans : state.packages;
+    item.replaceChildren(...list.filter((x) => x.is_active).map((x) => h("option", { value: x.id }, `${x.name} · ${omr(x.price_baisa)}`)));
+    trainerWrap.replaceChildren(kind.value === "pt_package" ? field("Trainer", trainer) : "");
+  };
+  kind.addEventListener("change", fill); fill();
+  openDialog("Record a payment at the gym", h("div", {},
+    h("p", { class: "muted small" }, "Use this for money taken in person. The member gets their membership or sessions and a numbered receipt straight away."),
+    field("What they paid for", kind), field("Item", item), trainerWrap, field("How they paid", method)),
+    form({ kind, item, trainer, method }, (v) => run(db.rpc("staff_record_payment", {
+      p_member: m.id, p_kind: v.kind, p_item: v.item, p_trainer: v.kind === "pt_package" ? v.trainer : null, p_method: v.method,
+    }), "Payment recorded").then(done), "Record payment"));
+}
+function bookFor(m, done) {
+  const trainer = select(state.trainers.filter((t) => t.is_active).map((t) => [t.id, t.name]));
+  const at = input(addDays(today(), 1) + "T18:00", { type: "datetime-local" });
+  openDialog("Book a PT session", h("div", {},
+    h("p", { class: "muted small" }, "Uses one session from the member's package with this trainer. Overlaps are refused automatically."),
+    field("Trainer", trainer), field("Start (gym time)", at)),
+    form({ trainer, at }, (v) => run(db.rpc("staff_book_session", { p_member: m.id, p_trainer: v.trainer, p_starts_at: fromLocal(v.at) }), "Session booked").then(done), "Book"));
+}
+function grantMembership(m, done) {
+  const plan = select(state.plans.map((p) => [p.id, p.name]));
+  const start = input(today(), { type: "date" }); const end = input(addDays(today(), 29), { type: "date" });
+  openDialog("Free membership", h("div", {}, h("p", { class: "muted small" }, "No payment or receipt. Recorded in the activity log."),
+    field("Plan", plan), h("div", { class: "two" }, field("Starts", start), field("Ends", end))),
+    form({ plan, start, end }, (v) => run(db.rpc("staff_grant_membership", { p_member: m.id, p_plan: v.plan, p_start: v.start, p_end: v.end }), "Membership added").then(done), "Add membership"));
+}
+function editMember(m, done) {
+  const f = { first: input(m.first_name), last: input(m.last_name), phone: input(m.phone, { inputmode: "tel" }), email: input(m.email, { type: "email" }) };
+  openDialog("Edit details", h("div", { class: "two" }, field("First name", f.first), field("Last name", f.last), field("Phone", f.phone), field("Email", f.email)),
+    form(f, (v) => run(db.rpc("staff_update_member", { p_member: m.id, p_first: v.first, p_last: v.last, p_phone: v.phone, p_email: v.email }), "Saved").then(done)));
+}
+function setRole(m, done) {
+  const role = select([["member", "Member"], ["trainer", "Coach"], ["receptionist", "Receptionist"], ["admin", "Admin (can change roles)"], ["owner", "Owner"]], m.role);
+  openDialog("Role", h("div", {}, h("p", { class: "muted small" }, "Coaches and receptionists can use this panel and see every member. Only owners and admins can change roles."), field("Role", role)),
+    form({ role }, (v) => run(db.rpc("staff_set_role", { p_member: m.id, p_role: v.role }), "Role updated").then(done)));
+}
+function editMembership(x, done) {
+  const end = input(x.end_date, { type: "date" });
+  const status = select([["active", "Active"], ["frozen", "Paused"], ["cancelled", "Cancelled"], ["expired", "Expired"]], x.status);
+  openDialog("Change membership", h("div", {}, h("p", { class: "muted small" }, "Extend by moving the end date, or pause or cancel. The member is notified."),
+    h("div", { class: "two" }, field("Ends", end), field("Status", status))),
+    form({ end, status }, (v) => run(db.rpc("staff_update_membership", { p_membership: x.id, p_end: v.end, p_status: v.status }), "Membership updated").then(done)));
+}
+function editPackage(x, done) {
+  const total = input(x.sessions_total, { type: "number", min: 1 }); const used = input(x.sessions_used, { type: "number", min: 0 });
+  const expires = input(String(x.expires_at).slice(0, 10), { type: "date" });
+  openDialog("Change PT package", h("div", { class: "two" }, field("Sessions in package", total), field("Sessions used", used), field("Use by", expires)),
+    form({ total, used, expires }, (v) => run(db.rpc("staff_update_package", { p_package: x.id, p_total: +v.total, p_used: +v.used, p_expires: v.expires }), "Package updated").then(done)));
+}
+function refund(r, done) {
+  const note = input("", { placeholder: "Reason (optional)" });
+  openDialog("Record a refund", h("div", {},
+    h("p", {}, `${r.product}, ${omr(r.amount_baisa)}.`),
+    h("p", { class: "muted small" }, "This cancels what the payment gave the member and marks the receipt refunded. Return the money itself in the Thawani dashboard or at the till."),
+    field("Reason", note)),
+    form({ note }, (v) => run(db.rpc("staff_refund_order", { p_order: r.order_id, p_note: v.note }), "Refund recorded").then(done), "Record refund"));
+}
+
+// ---------- Bookings ----------
+async function Bookings() {
+  await loadCatalogue();
+  const from = input(state.bookFrom || today(), { type: "date" });
+  const trainer = select([["", "All trainers"], ...state.trainers.map((t) => [t.id, t.name])], state.bookTrainer || "");
+  const list = h("div", {});
+  const load = async () => {
+    state.bookFrom = from.value; state.bookTrainer = trainer.value;
+    let q = db.from("pt_sessions").select("id, starts_at, ends_at, status, member_id, trainer_id, member:profiles(first_name,last_name,email), trainer:trainers(name)")
+      .neq("status", "held").gte("starts_at", fromLocal(from.value + "T00:00")).lt("starts_at", fromLocal(addDays(from.value, 7) + "T00:00")).order("starts_at");
+    if (trainer.value) q = q.eq("trainer_id", trainer.value);
+    const rows = (await run(q)).map((s) => ({ ...s, member_name: s.member ? fullName(s.member) : "", trainer_name: s.trainer?.name }));
+    list.replaceChildren(rows.length ? sessionTable(rows, true) : h("div", { class: "empty" }, "No sessions in these 7 days."));
+  };
+  from.addEventListener("change", load); trainer.addEventListener("change", load);
+  await load();
+  return h("div", {}, h("div", { class: "head" }, h("h1", {}, "Bookings")),
+    h("div", { class: "two" }, field("Week starting", from), field("Trainer", trainer)), h("div", { style: "margin-top:16px" }, list));
+}
+
+// ---------- Trainers ----------
+const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+async function Trainers() {
+  await loadCatalogue();
+  return h("div", {},
+    h("div", { class: "head" }, h("h1", {}, "Trainers"), h("button", { class: "btn primary", onclick: () => editTrainer({}) }, "Add trainer")),
+    h("div", { class: "scroll" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", {}, "Name"), h("th", {}, "Specialties"), h("th", {}, "Session"), h("th", {}, "Shown"), h("th", {}, ""))),
+      h("tbody", {}, state.trainers.map((t) => h("tr", {},
+        h("td", {}, h("strong", {}, t.name), h("div", { class: "small muted" }, t.headline)),
+        h("td", { class: "small" }, (t.specialties || []).join(", ")), h("td", {}, `${t.session_minutes} min`),
+        h("td", {}, t.is_active ? badgeFor("active") : h("span", { class: "badge" }, "hidden")),
+        h("td", {}, h("div", { class: "row" },
+          h("button", { class: "btn small", onclick: () => editTrainer(t) }, "Edit"),
+          h("button", { class: "btn small", onclick: () => editHours(t) }, "Hours")))))))));
+}
+function editTrainer(t) {
+  const f = {
+    name: input(t.name), headline: input(t.headline), bio: h("textarea", {}, t.bio || ""), philosophy: input(t.philosophy),
+    specialties: input((t.specialties || []).join(", ")), certifications: input((t.certifications || []).join(", ")),
+    languages: input((t.languages || []).join(", ")), years: input(t.years_experience ?? 0, { type: "number", min: 0 }),
+    minutes: input(t.session_minutes ?? 60, { type: "number", min: 15, step: 15 }), order: input(t.sort_order ?? state.trainers.length + 1, { type: "number" }),
+    active: checkbox(t.is_active ?? true),
+  };
+  const list = (s) => s.split(",").map((x) => x.trim()).filter(Boolean);
+  openDialog(t.id ? "Edit trainer" : "Add trainer", h("div", {},
+    h("div", { class: "two" }, field("Name", f.name), field("Headline", f.headline)), field("Bio", f.bio), field("Coaching approach", f.philosophy),
+    field("Specialties (comma separated)", f.specialties), field("Certifications (comma separated)", f.certifications),
+    h("div", { class: "two" }, field("Languages", f.languages), field("Years coaching", f.years), field("Session length (min)", f.minutes), field("Order shown", f.order)),
+    h("label", { class: "check" }, f.active, "Show to members")),
+    form(f, async (v) => {
+      const row = { name: v.name, headline: v.headline, bio: v.bio, philosophy: v.philosophy, specialties: list(v.specialties),
+        certifications: list(v.certifications), languages: list(v.languages), years_experience: +v.years, session_minutes: +v.minutes,
+        sort_order: +v.order, is_active: v.active };
+      if (t.id) await run(db.from("trainers").update(row).eq("id", t.id), "Trainer saved");
+      else {
+        const created = await run(db.from("trainers").insert(row).select().single(), "Trainer added");
+        // New trainers start with the gym's standard hours.
+        const rows = [0, 1, 2, 3, 4, 6].flatMap((d) => [{ trainer_id: created.id, weekday: d, start_time: "05:00", end_time: "12:00" },
+                                                       { trainer_id: created.id, weekday: d, start_time: "13:00", end_time: "24:00" }])
+          .concat([{ trainer_id: created.id, weekday: 5, start_time: "17:00", end_time: "21:00" }]);
+        await run(db.from("trainer_hours").insert(rows));
+      }
+      render();
+    }));
+}
+async function editHours(t) {
+  const rows = await run(db.from("trainer_hours").select("*").eq("trainer_id", t.id).order("weekday").order("start_time"));
+  const editors = h("div", {});
+  const addRow = (r = { weekday: 1, start_time: "05:00", end_time: "12:00" }) => {
+    const line = h("div", { class: "row", style: "margin:8px 0" },
+      select(days.map((d, i) => [i, d]), r.weekday), input(r.start_time.slice(0, 5), { type: "time", style: "width:130px" }),
+      h("span", {}, "to"), input(r.end_time.slice(0, 5) === "24:00" ? "00:00" : r.end_time.slice(0, 5), { type: "time", style: "width:130px" }),
+      h("button", { class: "btn small danger", onclick: () => line.remove(), "aria-label": "Remove" }, "Remove"));
+    editors.append(line);
+  };
+  rows.forEach(addRow);
+  openDialog(`Hours: ${t.name}`, h("div", {},
+    h("p", { class: "muted small" }, "Members can book PT inside these hours (gym time). Use 00:00 as the end for midnight."), editors,
+    h("button", { class: "btn small", onclick: () => addRow() }, "Add hours")),
+    form({}, async () => {
+      const next = [...editors.children].map((line) => {
+        const [day, start, , end] = line.querySelectorAll("select, input");
+        return { trainer_id: t.id, weekday: +day.value, start_time: start.value, end_time: end.value === "00:00" ? "24:00" : end.value };
+      });
+      await run(db.from("trainer_hours").delete().eq("trainer_id", t.id));
+      if (next.length) await run(db.from("trainer_hours").insert(next));
+      toast("Hours saved");
+    }, "Save hours"));
+}
+
+// ---------- Plans and prices ----------
+async function Plans() {
+  await loadCatalogue();
+  return h("div", {},
+    h("div", { class: "head" }, h("h1", {}, "Plans and prices"),
+      h("div", { class: "row" }, h("button", { class: "btn primary", onclick: () => editPlan({}) }, "Add plan"),
+        h("button", { class: "btn", onclick: () => editPackageType({}) }, "Add PT package"))),
+    h("p", { class: "muted" }, "Prices include 5% VAT. Changes show to members straight away; existing members keep what they paid for."),
+    h("h2", { style: "margin-top:20px" }, "Memberships"),
+    miniTable(["Plan", "Length", "Price", "Shown", ""], state.plans.map((p) => [
+      h("span", {}, h("strong", {}, p.name), p.is_featured ? h("span", { class: "badge y", style: "margin-left:8px" }, "Featured") : ""),
+      `${p.duration_days} days`, omr(p.price_baisa), p.is_active ? badgeFor("active") : h("span", { class: "badge" }, "hidden"),
+      h("button", { class: "btn small", onclick: () => editPlan(p) }, "Edit")])),
+    h("h2", { style: "margin-top:28px" }, "PT packages"),
+    miniTable(["Package", "Sessions", "Valid", "Price", "Shown", ""], state.packages.map((k) => [
+      h("strong", {}, k.name), k.session_count, `${k.validity_days} days`, omr(k.price_baisa),
+      k.is_active ? badgeFor("active") : h("span", { class: "badge" }, "hidden"),
+      h("button", { class: "btn small", onclick: () => editPackageType(k) }, "Edit")])));
+}
+function editPlan(p) {
+  const f = { name: input(p.name), summary: input(p.summary), days: input(p.duration_days ?? 30, { type: "number", min: 1 }),
+    price: input(p.price_baisa ? p.price_baisa / 1000 : "", { inputmode: "decimal", placeholder: "25" }),
+    benefits: h("textarea", {}, (p.benefits || []).join("\n")), order: input(p.sort_order ?? state.plans.length + 1, { type: "number" }),
+    featured: checkbox(p.is_featured), active: checkbox(p.is_active ?? true) };
+  openDialog(p.id ? "Edit plan" : "Add plan", h("div", {},
+    h("div", { class: "two" }, field("Name", f.name), field("Short description", f.summary), field("Length in days", f.days), field("Price (OMR, incl. VAT)", f.price)),
+    field("What's included (one per line)", f.benefits), field("Order shown", f.order),
+    h("label", { class: "check" }, f.featured, "Highlight as most chosen"), h("label", { class: "check" }, f.active, "Show to members")),
+    form(f, async (v) => {
+      const row = { name: v.name, summary: v.summary, duration_days: +v.days, price_baisa: toBaisa(v.price),
+        benefits: v.benefits.split("\n").map((x) => x.trim()).filter(Boolean), sort_order: +v.order, is_featured: v.featured, is_active: v.active };
+      if (!(row.price_baisa > 0)) { toast("Enter a price above 0.", true); throw new Error("price"); }
+      await run(p.id ? db.from("membership_plans").update(row).eq("id", p.id) : db.from("membership_plans").insert(row), "Plan saved");
+      render();
+    }));
+}
+function editPackageType(k) {
+  const f = { name: input(k.name), count: input(k.session_count ?? 8, { type: "number", min: 1 }), days: input(k.validity_days ?? 60, { type: "number", min: 1 }),
+    price: input(k.price_baisa ? k.price_baisa / 1000 : "", { inputmode: "decimal" }), order: input(k.sort_order ?? state.packages.length + 1, { type: "number" }),
+    active: checkbox(k.is_active ?? true) };
+  openDialog(k.id ? "Edit PT package" : "Add PT package", h("div", {},
+    h("div", { class: "two" }, field("Name", f.name), field("Sessions", f.count), field("Valid for (days)", f.days), field("Price (OMR, incl. VAT)", f.price), field("Order shown", f.order)),
+    h("label", { class: "check" }, f.active, "Show to members")),
+    form(f, async (v) => {
+      const row = { name: v.name, session_count: +v.count, validity_days: +v.days, price_baisa: toBaisa(v.price), sort_order: +v.order, is_active: v.active };
+      if (!(row.price_baisa > 0)) { toast("Enter a price above 0.", true); throw new Error("price"); }
+      await run(k.id ? db.from("pt_packages").update(row).eq("id", k.id) : db.from("pt_packages").insert(row), "Package saved");
+      render();
+    }));
+}
+
+// ---------- News ----------
+async function News() {
+  const rows = await run(db.from("announcements").select("*").order("published_at", { ascending: false }));
+  return h("div", {},
+    h("div", { class: "head" }, h("h1", {}, "Gym news"), h("button", { class: "btn primary", onclick: () => editNews({}) }, "Post news")),
+    rows.length ? miniTable(["Date", "Title", "Shown", ""], rows.map((a) => [dateOnly(a.published_at),
+      h("span", {}, h("strong", {}, a.title), h("div", { class: "small muted" }, a.body)),
+      a.is_published ? badgeFor("active") : h("span", { class: "badge" }, "hidden"),
+      h("div", { class: "row" }, h("button", { class: "btn small", onclick: () => editNews(a) }, "Edit"),
+        h("button", { class: "btn small danger", onclick: async () => { if (confirm("Delete this post?")) { await run(db.from("announcements").delete().eq("id", a.id), "Deleted"); render(); } } }, "Delete"))]))
+      : h("div", { class: "empty" }, "No news yet."));
+}
+function editNews(a) {
+  const f = { title: input(a.title), body: h("textarea", {}, a.body || ""), shown: checkbox(a.is_published ?? true) };
+  openDialog(a.id ? "Edit news" : "Post news", h("div", {}, field("Title", f.title), field("Message", f.body), h("label", { class: "check" }, f.shown, "Show to members")),
+    form(f, async (v) => {
+      const row = { title: v.title, body: v.body, is_published: v.shown };
+      await run(a.id ? db.from("announcements").update(row).eq("id", a.id) : db.from("announcements").insert(row), "Posted");
+      render();
+    }, a.id ? "Save" : "Post"));
+}
+
+// ---------- Support ----------
+async function Support() {
+  const rows = await run(db.from("support_tickets").select("*, member:profiles(first_name,last_name,email), messages:support_messages(*)").order("updated_at", { ascending: false }).limit(100));
+  const label = { membership: "Membership", pt: "Personal training", payments: "Payments", classes: "Classes", other: "Other" };
+  return h("div", {}, h("div", { class: "head" }, h("h1", {}, "Support")),
+    rows.length ? h("div", { class: "scroll" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", {}, "Member"), h("th", {}, "Topic"), h("th", {}, "Last message"), h("th", {}, "Status"))),
+      h("tbody", {}, rows.map((t) => {
+        const msgs = (t.messages || []).sort((a, b) => a.created_at.localeCompare(b.created_at));
+        return h("tr", { class: "click", onclick: () => openTicket(t, msgs) },
+          h("td", {}, t.member ? fullName(t.member) : "Member"), h("td", {}, label[t.category] || t.category),
+          h("td", { class: "small" }, msgs.at(-1)?.body?.slice(0, 90) || ""), h("td", {}, badgeFor(t.status)));
+      })))) : h("div", { class: "empty" }, "No messages from members yet."));
+}
+function openTicket(t, msgs) {
+  const reply = h("textarea", { placeholder: "Write a reply. The member gets a notification." });
+  const resolve = checkbox(false);
+  openDialog(t.member ? fullName(t.member) : "Member", h("div", {},
+    h("div", { class: "thread" }, msgs.map((m) => h("div", { class: "bubble" + (m.from_member ? "" : " staff") }, m.body,
+      h("div", { class: "small", style: "opacity:.7;margin-top:4px" }, when(m.created_at))))),
+    field("Reply", reply), h("label", { class: "check" }, resolve, "Mark as resolved")),
+    form({ reply, resolve }, (v) => run(db.rpc("staff_reply_ticket", { p_ticket: t.id, p_body: v.reply, p_resolve: v.resolve }), "Reply sent").then(render), "Send"));
+}
+
+// ---------- Payments ----------
+async function Payments() {
+  const rows = await run(db.from("receipts").select("*").order("created_at", { ascending: false }).limit(200));
+  const total = rows.filter((r) => r.status === "success").reduce((sum, r) => sum + Number(r.amount_baisa), 0);
+  return h("div", {}, h("div", { class: "head" }, h("h1", {}, "Payments"),
+      h("button", { class: "btn", onclick: () => downloadCsv(rows) }, "Download CSV")),
+    h("p", { class: "muted" }, `Latest ${rows.length} receipts, ${omr(total)} paid. Receipts can't be edited; refunds are recorded against them.`),
+    rows.length ? miniTable(["Receipt", "Date", "Member", "For", "Method", "Amount", "Status", ""], rows.map((r) => [
+      r.number, dateOnly(r.created_at), r.member_name, r.product, h("span", { class: "small" }, r.method), omr(r.amount_baisa), badgeFor(r.status),
+      r.status === "success" ? h("button", { class: "btn small danger", onclick: () => refund(r, render) }, "Refund") : ""]))
+      : h("div", { class: "empty" }, "No payments yet."));
+}
+function downloadCsv(rows) {
+  const cols = ["number", "created_at", "member_name", "product", "method", "transaction_id", "amount_baisa", "vat_baisa", "status"];
+  const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const csv = [cols.join(","), ...rows.map((r) => cols.map((c) => esc(c.endsWith("baisa") ? (r[c] / 1000).toFixed(3) : r[c])).join(","))].join("\n");
+  const a = h("a", { href: URL.createObjectURL(new Blob([csv], { type: "text/csv" })), download: `biggest-gym-payments-${today()}.csv` });
+  document.body.append(a); a.click(); a.remove();
+}
+
+// ---------- Settings ----------
+async function Settings() {
+  const s = await run(db.from("gym_settings").select("*").single());
+  const f = { cancel: input(s.free_cancel_hours, { type: "number", min: 0 }), reschedules: input(s.max_reschedules, { type: "number", min: 0 }),
+    hold: input(s.hold_minutes, { type: "number", min: 1 }), buffer: input(s.buffer_minutes, { type: "number", min: 0 }),
+    notice: input(s.min_notice_minutes, { type: "number", min: 0 }), daily: input(s.max_daily_sessions, { type: "number", min: 1 }),
+    step: input(s.slot_step_minutes, { type: "number", min: 5, step: 5 }) };
+  const save = h("button", { class: "btn primary", onclick: async () => {
+    await run(db.from("gym_settings").update({ free_cancel_hours: +f.cancel.value, max_reschedules: +f.reschedules.value, hold_minutes: +f.hold.value,
+      buffer_minutes: +f.buffer.value, min_notice_minutes: +f.notice.value, max_daily_sessions: +f.daily.value, slot_step_minutes: +f.step.value }).eq("id", 1), "Settings saved");
+  } }, "Save settings");
+  return h("div", {}, h("div", { class: "head" }, h("h1", {}, "Gym settings")),
+    h("div", { class: "card" }, h("div", { class: "two" },
+      field("Free cancellation up to (hours before)", f.cancel), field("Reschedules allowed per session", f.reschedules),
+      field("Hold a time while paying (minutes)", f.hold), field("Gap between PT sessions (minutes)", f.buffer),
+      field("Earliest booking notice (minutes)", f.notice), field("Most PT sessions per trainer per day", f.daily),
+      field("Booking times every (minutes)", f.step)), h("div", { style: "margin-top:16px" }, save)),
+    h("p", { class: "muted small", style: "margin-top:12px" }, "Changes apply to new bookings immediately. Opening hours are set per trainer under Trainers > Hours."));
+}
+
+// ---------- Activity ----------
+async function Activity() {
+  const rows = await run(db.from("audit_log").select("*").order("created_at", { ascending: false }).limit(150));
+  const ids = [...new Set(rows.map((r) => r.actor_id).filter(Boolean))];
+  if (ids.length) {
+    const { data } = await db.from("profiles").select("id, first_name, last_name, email").in("id", ids);
+    (data || []).forEach((p) => state.staffNames[p.id] = fullName(p));
+  }
+  const describe = (r) => {
+    const after = r.detail?.after, before = r.detail?.before;
+    if (r.entity === "membership_plans" || r.entity === "pt_packages") {
+      const name = after?.name || before?.name;
+      if (before && after && before.price_baisa !== after.price_baisa) return `Price of ${name}: ${omr(before.price_baisa)} → ${omr(after.price_baisa)}`;
+      return `${r.action} ${r.entity === "membership_plans" ? "plan" : "PT package"} ${name}`;
+    }
+    const verb = { insert: "Added", update: "Edited", delete: "Removed" }[r.action];
+    if (r.entity === "trainers") return `${verb} trainer ${after?.name || before?.name}`;
+    if (r.entity === "announcements") return `${verb} news: ${after?.title || before?.title}`;
+    if (r.entity === "trainer_reviews") return `${verb} a trainer review`;
+    if (r.entity === "gym_settings") return "Changed gym settings";
+    if (r.entity === "trainer_hours") return "Changed trainer hours";
+    const amount = r.detail?.amount_baisa ? ` (${omr(r.detail.amount_baisa)})` : "";
+    const plain = {
+      "payment.recorded": `Recorded a payment at the gym${amount}`, "order.settled": `Payment confirmed${amount}`,
+      "order.refunded": `Recorded a refund${amount}`, "membership.granted": "Gave a free membership",
+      "membership.updated": `Changed a membership${r.detail?.status ? " to " + r.detail.status : ""}`,
+      "package.updated": "Changed a PT package", "session.booked": "Booked a PT session for a member",
+      "session.moved": "Moved a PT session", "member.updated": "Edited a member's details",
+      "member.role_changed": `Changed a member's role to ${r.detail?.role}`, "account.deleted": "A member deleted their account",
+      "session.status": `Marked a session ${String(r.detail?.to || "").replace("_", " ")}`,
+    };
+    return plain[r.action] || r.action;
+  };
+  return h("div", {}, h("div", { class: "head" }, h("h1", {}, "Activity log")),
+    h("p", { class: "muted" }, "Every change made in this panel, with who made it."),
+    rows.length ? miniTable(["When", "Who", "What"], rows.map((r) => [when(r.created_at),
+      r.actor_id ? (state.staffNames[r.actor_id] || "Staff") : h("span", { class: "muted" }, "System"), describe(r)]))
+      : h("div", { class: "empty" }, "Nothing yet."));
+}
+
+// ---------- sign-in ----------
+function signInScreen(message) {
+  const emailOrUser = h("input", { type: "text", autocomplete: "username", placeholder: "you@example.com or your username" });
+  const password = h("input", { type: "password", autocomplete: "current-password", placeholder: "Password" });
+  const statusBox = h("p", { class: "card", role: "alert", style: "display:none" });
+
+  function showStatus(text) {
+    statusBox.textContent = text;
+    statusBox.style.display = text ? "block" : "none";
+  }
+
+  async function doLogin() {
+    showStatus("");
+    const { error } = await BGConnect.loginWithIdentifier(db, emailOrUser.value, password.value);
+    if (error) { showStatus(error.message); return; }
+    location.reload();
+  }
+
+  root.replaceChildren(h("div", { class: "signin" }, h("div", { class: "box" },
+    h("div", { class: "brand" }, "THE BIGGEST", h("br"), h("span", {}, "GYM"), " STAFF PANEL"),
+    message ? h("p", { class: "card", role: "alert" }, message) : h("p", { class: "muted" }, "Sign in with the email or username the gym owner set up for you."),
+    h("label", {}, "Email or username"), emailOrUser,
+    h("label", {}, "Password"), password,
+    statusBox,
+    h("button", { class: "btn primary", style: "width:100%; margin-top:16px", onclick: doLogin }, "Log in"),
+    h("p", { class: "muted small", style: "margin-top:14px" },
+      "Staff accounts are created by gym management — contact your admin if you don't have login details yet."),
+    h("div", { style: "margin-top:18px; text-align:center" }, BGConnect.disconnectButton("Not the right gym? Disconnect")))));
+}
+
+async function start() {
+  const config = BGConnect.readConfig();
+  if (!config) { BGConnect.renderSetupScreen(root, "the staff panel", start); return; }
+  db = supabase.createClient(config.url, config.key);
+
+  const { data } = await db.auth.getSession();
+  if (!data.session) return signInScreen();
+  state.user = data.session.user;
+  const { data: role, error } = await db.rpc("my_role");
+  if (error || !["trainer", "receptionist", "admin", "owner"].includes(role)) {
+    await db.auth.signOut();
+    return signInScreen(`${state.user.email || "This account"} isn't a coach yet. Ask the owner to set your role in Members, then sign in again.`);
+  }
+  state.role = role;
+  render();
+}
+start();
+</script>
+</body>
+</html>
