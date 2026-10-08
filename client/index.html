@@ -229,7 +229,7 @@ function signInScreen(message) {
   // so it stays unique and stable. It's never shown anywhere in the UI.
   function placeholderEmail(username) {
     const slug = username.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-    return slug ? `${slug}@members.thebiggestgymoman.com` : "";
+    return slug ? `member-${slug}@thebiggestgymoman.com` : "";
   }
 
   async function doSignup() {
